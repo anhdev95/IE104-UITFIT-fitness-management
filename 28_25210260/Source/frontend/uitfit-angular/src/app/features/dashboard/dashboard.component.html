@@ -1,0 +1,185 @@
+@if (loading()) {
+  <app-loading />
+} @else if (error()) {
+  <app-empty-state icon="bi-wifi-off" title="Không tải được dữ liệu" message="Vui lòng kiểm tra kết nối và thử lại."
+    actionLabel="Thử lại" (action)="load()" />
+} @else if (data(); as d) {
+  <div class="welcome-card mb-4">
+    <div>
+      <h2>Xin chào, {{ firstName() }}! 👋</h2>
+      <p class="mb-0">{{ today | date: 'EEEE, dd/MM/yyyy' }} · Hôm nay là một ngày tuyệt vời để tập luyện.</p>
+    </div>
+    <a routerLink="/workouts/create" class="btn btn-light"><i class="bi bi-plus-lg me-1"></i>Tạo lịch tập</a>
+  </div>
+
+  <div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3">
+      <div class="stat-card">
+        <div class="stat-icon icon-primary"><i class="bi bi-speedometer"></i></div>
+        <div>
+          <span class="stat-label">Cân nặng hiện tại</span>
+          <strong class="stat-value">{{ d.currentWeight ? (d.currentWeight | number: '1.0-1') + ' kg' : '—' }}</strong>
+          <a routerLink="/health" class="stat-sub">Cập nhật chỉ số</a>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card">
+        <div class="stat-icon icon-success"><i class="bi bi-activity"></i></div>
+        <div>
+          <span class="stat-label">BMI</span>
+          <strong class="stat-value">{{ d.bmi ? (d.bmi | number: '1.2-2') : '—' }}</strong>
+          @if (d.bmiCategory) {
+            <span class="stat-sub bmi-{{ d.bmiCategory.key }}">{{ d.bmiCategory.label }}</span>
+          }
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card">
+        <div class="stat-icon icon-warning"><i class="bi bi-trophy"></i></div>
+        <div>
+          <span class="stat-label">Tổng buổi tập</span>
+          <strong class="stat-value">{{ d.completedWorkouts }}</strong>
+          <span class="stat-sub">buổi đã hoàn thành</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-6 col-xl-3">
+      <div class="stat-card">
+        <div class="stat-icon icon-danger"><i class="bi bi-clock-history"></i></div>
+        <div>
+          <span class="stat-label">Tổng thời gian tập</span>
+          <strong class="stat-value">{{ d.totalTrainingMinutes * 60 | duration }}</strong>
+          <span class="stat-sub">{{ d.totalTrainingMinutes | number }} phút</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-lg-7">
+      <div class="card-soft h-100">
+        <div class="card-head">
+          <h5><i class="bi bi-lightning-charge text-warning me-1"></i>Lịch tập hôm nay</h5>
+          <a routerLink="/workouts" class="small">Xem tất cả</a>
+        </div>
+        @if (d.todayWorkout; as t) {
+          <div class="today-workout">
+            <div class="d-flex justify-content-between align-items-start gap-3">
+              <div>
+                <h4 class="mb-1">{{ t.name }}</h4>
+                <p class="text-muted mb-0">
+                  <i class="bi bi-list-check me-1"></i>{{ t.exercises_count }} bài tập
+                  @if (t.estimated_duration) { · <i class="bi bi-clock me-1"></i>{{ t.estimated_duration }} phút }
+                </p>
+              </div>
+              <span class="badge" [class]="'badge ' + (t.status | badge)">{{ t.status | label: 'planStatus' }}</span>
+            </div>
+            <div class="d-flex justify-content-between small mt-3 mb-1">
+              <span>Tiến độ</span><strong>{{ t.progress }}%</strong>
+            </div>
+            <div class="progress mb-3" style="height: 10px">
+              <div class="progress-bar" [style.width.%]="t.progress"></div>
+            </div>
+            <div class="d-flex gap-2">
+              @if (t.status !== 'completed') {
+                <button class="btn btn-primary" (click)="startWorkout(t)" [disabled]="starting()">
+                  <i class="bi bi-play-fill me-1"></i>{{ t.active_session_id ? 'Tiếp tục tập' : 'Bắt đầu tập' }}
+                </button>
+              }
+              <a class="btn btn-light" [routerLink]="['/workouts', t.id]">Chi tiết</a>
+            </div>
+          </div>
+        } @else {
+          <app-empty-state icon="bi-calendar-x" title="Hôm nay chưa có lịch tập" message="Tạo một lịch tập để bắt đầu nhé."
+            actionLabel="Tạo lịch tập" actionLink="/workouts/create" />
+        }
+      </div>
+    </div>
+    <div class="col-lg-5">
+      <div class="card-soft h-100">
+        <div class="card-head">
+          <h5><i class="bi bi-bullseye text-primary me-1"></i>Tiến độ tuần này</h5>
+        </div>
+        <div class="weekly-progress">
+          <div class="weekly-number"><strong>{{ d.weeklyCompleted }}</strong>/{{ d.weeklyGoal }}</div>
+          <p class="text-muted mb-2">buổi tập hoàn thành trong tuần</p>
+          <div class="progress mb-2" style="height: 12px">
+            <div class="progress-bar bg-success" [style.width.%]="weeklyPercent()"></div>
+          </div>
+          <small class="text-muted">
+            @if (d.weeklyCompleted >= d.weeklyGoal) { 🎉 Bạn đã đạt mục tiêu tuần! }
+            @else { Còn {{ d.weeklyGoal - d.weeklyCompleted }} buổi nữa để đạt mục tiêu. }
+          </small>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="card-soft h-100">
+        <div class="card-head">
+          <h5><i class="bi bi-graph-down me-1 text-primary"></i>Biểu đồ cân nặng</h5>
+          <a routerLink="/progress" class="small">Xem tiến trình</a>
+        </div>
+        @if (d.weightProgress.length) {
+          <app-chart type="line" [data]="weightChart()" [height]="280" />
+        } @else {
+          <app-empty-state icon="bi-heart-pulse" title="Chưa có dữ liệu sức khỏe." actionLabel="Cập nhật chỉ số" actionLink="/health" />
+        }
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card-soft h-100">
+        <div class="card-head"><h5><i class="bi bi-calendar-week me-1 text-primary"></i>Lịch tập tuần này</h5></div>
+        <ul class="week-list">
+          @for (day of weekDays(); track day.date.toISOString()) {
+            <li [class.today]="day.isToday">
+              <div class="week-day">
+                <span>{{ day.date | date: 'EEE' }}</span>
+                <strong>{{ day.date | date: 'dd' }}</strong>
+              </div>
+              <div class="flex-grow-1">
+                @for (p of day.plans; track p.id) {
+                  <a [routerLink]="['/workouts', p.id]" class="week-plan">
+                    <span>{{ p.name }}</span>
+                    <span class="badge" [class]="'badge ' + (p.status | badge)">{{ p.status | label: 'planStatus' }}</span>
+                  </a>
+                } @empty {
+                  <span class="text-muted small">Nghỉ ngơi</span>
+                }
+              </div>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  @if (d.recentSessions.length) {
+    <div class="card-soft mt-4">
+      <div class="card-head">
+        <h5><i class="bi bi-clock-history me-1 text-primary"></i>Buổi tập gần đây</h5>
+        <a routerLink="/history" class="small">Xem lịch sử</a>
+      </div>
+      <div class="table-responsive">
+        <table class="table table-modern mb-0">
+          <thead><tr><th>Ngày</th><th>Lịch tập</th><th>Thời gian</th><th class="text-end">Volume</th><th></th></tr></thead>
+          <tbody>
+            @for (s of d.recentSessions; track s.id) {
+              <tr>
+                <td>{{ s.completed_at | date: 'dd/MM/yyyy HH:mm' }}</td>
+                <td class="fw-semibold">{{ s.plan_name }}</td>
+                <td>{{ s.duration_seconds | duration }}</td>
+                <td class="text-end">{{ s.total_volume | number: '1.0-1' }} kg</td>
+                <td class="text-end"><a [routerLink]="['/history', s.id]" class="btn btn-sm btn-light">Xem</a></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+}

@@ -1,0 +1,156 @@
+@if (loading()) {
+  <app-loading text="Đang tải buổi tập..." />
+} @else if (session(); as s) {
+  <!-- Header buổi tập -->
+  <div class="session-header mb-4">
+    <div class="d-flex flex-wrap gap-3 align-items-center justify-content-between">
+      <div>
+        <span class="live-dot">Đang tập</span>
+        <h2 class="mb-1">{{ s.plan_name }}</h2>
+        <div class="session-meta">
+          <span><i class="bi bi-calendar3"></i>{{ (s.plan?.scheduled_date ?? s.started_at) | date: 'EEEE, dd/MM/yyyy' }}</span>
+          <span><i class="bi bi-play-circle"></i>Bắt đầu {{ s.started_at | date: 'HH:mm' }}</span>
+        </div>
+      </div>
+      <div class="session-stats">
+        <div><span>Thời gian đã tập</span><strong class="font-mono">{{ elapsed() | duration: 'clock' }}</strong></div>
+        <div><span>Bài hoàn thành</span><strong>{{ summary().completed_exercises }}/{{ summary().total_exercises }}</strong></div>
+        <div><span>Sets</span><strong>{{ summary().completed_sets }}/{{ summary().total_sets }}</strong></div>
+        <div><span>Volume</span><strong>{{ summary().total_volume | number: '1.0-1' }}<small> kg</small></strong></div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-3 mt-3">
+      <div class="progress flex-grow-1" style="height: 10px">
+        <div class="progress-bar bg-success" [style.width.%]="summary().progress"></div>
+      </div>
+      <strong>{{ summary().progress }}%</strong>
+    </div>
+    <div class="d-flex flex-wrap gap-2 mt-3">
+      <button type="button" class="btn btn-success" (click)="finish()" [disabled]="finishing()">
+        @if (finishing()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+        <i class="bi bi-flag-fill me-1"></i>Hoàn thành buổi tập
+      </button>
+      <button type="button" class="btn btn-outline-light" (click)="cancel()"><i class="bi bi-x-circle me-1"></i>Hủy buổi tập</button>
+      @if (s.workout_plan_id) {
+        <a class="btn btn-outline-light ms-auto" [routerLink]="['/workouts', s.workout_plan_id]"><i class="bi bi-arrow-left me-1"></i>Về lịch tập</a>
+      }
+    </div>
+  </div>
+
+  <!-- Danh sách exercise phía trên -->
+  <div class="exercise-stepper mb-4">
+    @for (ex of exercises(); track ex.exercise_id; let i = $index) {
+      <button type="button" class="step-item" [class.active]="i === currentIndex()" [class.done]="exerciseDone(ex)" (click)="select(i)">
+        <span class="step-index">
+          @if (exerciseDone(ex)) { <i class="bi bi-check-lg"></i> } @else { {{ i + 1 }} }
+        </span>
+        <span class="text-start min-w-0">
+          <strong class="d-block text-truncate">{{ ex.exercise?.name }}</strong>
+          <small>{{ completedCount(ex) }}/{{ ex.sets.length }} sets</small>
+        </span>
+      </button>
+    }
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      @if (current(); as ex) {
+        <div class="card-soft">
+          <div class="current-exercise">
+            <img [src]="ex.exercise?.image_url" alt="" class="thumb-lg" appImgFallback />
+            <div class="flex-grow-1">
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <h3 class="mb-0">{{ ex.exercise?.name }}</h3>
+                <span class="badge badge-soft-primary">{{ ex.exercise?.muscle_group | label: 'muscle' }}</span>
+              </div>
+              <div class="target-info">
+                <span><i class="bi bi-bullseye"></i>Target: <strong>{{ ex.target_sets }} sets × {{ ex.target_reps ?? '—' }} reps</strong></span>
+                <span><i class="bi bi-box"></i>Target Weight: <strong>{{ ex.target_weight ? ex.target_weight + 'kg' : 'Bodyweight' }}</strong></span>
+                <span><i class="bi bi-stopwatch"></i>Rest: <strong>{{ ex.rest_seconds }}s</strong></span>
+              </div>
+              @if (ex.note) { <small class="text-muted"><i class="bi bi-sticky me-1"></i>{{ ex.note }}</small> }
+            </div>
+            <a class="btn btn-sm btn-light" [routerLink]="['/exercises', ex.exercise_id]" target="_blank" title="Xem hướng dẫn">
+              <i class="bi bi-info-circle"></i>
+            </a>
+          </div>
+
+          <div class="table-responsive">
+            <table class="table set-table align-middle mb-0">
+              <thead>
+                <tr>
+                  <th>Set</th><th>Target reps</th><th>Reps thực tế</th><th>Kg thực tế</th><th>RPE</th><th>Rest (s)</th><th>Note</th><th class="text-center">Done</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (set of ex.sets; track set.id) {
+                  @let d = draft(set);
+                  <tr [class.set-done]="set.completed" [class.set-next]="nextSet()?.id === set.id">
+                    <td><span class="set-number">{{ set.set_number }}</span></td>
+                    <td class="text-muted">{{ set.target_reps ?? '—' }}</td>
+                    <td><input type="number" min="0" class="form-control form-control-sm set-input" [(ngModel)]="d.actual_reps"
+                      [disabled]="set.completed" aria-label="Reps thực tế" /></td>
+                    <td><input type="number" min="0" step="0.5" class="form-control form-control-sm set-input" [(ngModel)]="d.actual_weight"
+                      [disabled]="set.completed" aria-label="Kg thực tế" /></td>
+                    <td><input type="number" min="1" max="10" step="0.5" class="form-control form-control-sm set-input" [(ngModel)]="d.rpe"
+                      [disabled]="set.completed" placeholder="1-10" aria-label="RPE" /></td>
+                    <td><input type="number" min="0" step="15" class="form-control form-control-sm set-input" [(ngModel)]="d.rest_seconds"
+                      [disabled]="set.completed" aria-label="Thời gian nghỉ" /></td>
+                    <td><input class="form-control form-control-sm" [(ngModel)]="d.note" [disabled]="set.completed"
+                      maxlength="255" placeholder="Ghi chú" aria-label="Ghi chú" /></td>
+                    <td class="text-center text-nowrap">
+                      @if (savingSetId() === set.id) {
+                        <span class="spinner-border spinner-border-sm text-primary"></span>
+                      } @else if (set.completed) {
+                        <button type="button" class="btn btn-sm btn-done" (click)="undoSet(set)" title="Bỏ tick để sửa">
+                          <i class="bi bi-check-lg"></i>
+                        </button>
+                      } @else {
+                        <button type="button" class="btn btn-sm btn-check-set" (click)="completeSet(ex, set)" title="Hoàn thành set">
+                          <i class="bi bi-check-lg"></i>
+                        </button>
+                        <button type="button" class="btn btn-sm btn-icon text-danger" (click)="deleteSet(set)" title="Xóa set">
+                          <i class="bi bi-trash3"></i>
+                        </button>
+                      }
+                    </td>
+                  </tr>
+                  @if (d.error) {
+                    <tr class="set-error-row"><td colspan="8"><i class="bi bi-exclamation-circle me-1"></i>Set {{ set.set_number }}: {{ d.error }}</td></tr>
+                  }
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <div class="d-flex flex-wrap gap-2 justify-content-between mt-3">
+            <button type="button" class="btn btn-light" (click)="addSet(ex)"><i class="bi bi-plus-lg me-1"></i>Thêm set</button>
+            <div class="d-flex gap-2">
+              <button type="button" class="btn btn-light" (click)="select(currentIndex() - 1)" [disabled]="currentIndex() === 0">
+                <i class="bi bi-chevron-left"></i> Bài trước
+              </button>
+              <button type="button" class="btn btn-light" (click)="select(currentIndex() + 1)" [disabled]="currentIndex() >= exercises().length - 1">
+                Bài tiếp <i class="bi bi-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+
+    <div class="col-xl-4">
+      <div class="sticky-xl">
+        <app-rest-timer (finished)="onTimerFinished()" />
+        <div class="card-soft mt-4">
+          <h6 class="mb-3"><i class="bi bi-lightbulb me-1 text-warning"></i>Hướng dẫn nhanh</h6>
+          <ol class="small text-muted mb-0 ps-3 quick-guide">
+            <li>Nhập <strong>reps</strong>, <strong>kg</strong>, <strong>RPE</strong> (1–10) và ghi chú cho set.</li>
+            <li>Bấm <span class="badge badge-soft-success"><i class="bi bi-check-lg"></i></span> để lưu set — đồng hồ nghỉ tự chạy.</li>
+            <li>Dùng <strong>Tạm dừng / +30s / Bỏ qua</strong> khi cần.</li>
+            <li>Xong tất cả, bấm <strong>Hoàn thành buổi tập</strong>.</li>
+          </ol>
+        </div>
+      </div>
+    </div>
+  </div>
+}

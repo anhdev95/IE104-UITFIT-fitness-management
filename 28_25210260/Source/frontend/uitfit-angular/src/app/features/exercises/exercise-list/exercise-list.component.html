@@ -1,0 +1,54 @@
+<div class="card-soft mb-4">
+  <div class="row g-3 align-items-center">
+    <div class="col-lg-5">
+      <div class="input-icon">
+        <i class="bi bi-search"></i>
+        <input type="search" class="form-control" placeholder="Tìm bài tập theo tên, ví dụ: Bench Press"
+          [ngModel]="search()" (ngModelChange)="onSearch($event)" aria-label="Tìm bài tập" />
+      </div>
+    </div>
+    <div class="col-lg-3 col-sm-6">
+      <select class="form-select" [ngModel]="difficulty()" (ngModelChange)="setDifficulty($event)" aria-label="Độ khó">
+        <option value="">Mọi độ khó</option>
+        @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+      </select>
+    </div>
+    <div class="col-lg-4 col-sm-6 text-sm-end">
+      <span class="text-muted small">Tìm thấy <strong>{{ exercises().length }}</strong> bài tập</span>
+    </div>
+  </div>
+  <div class="chip-group mt-3">
+    @for (g of groups; track g.value) {
+      <button type="button" class="chip" [class.active]="group() === g.value" (click)="setGroup(g.value)">{{ g.label }}</button>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <app-loading text="Đang tải thư viện bài tập..." />
+} @else {
+  <div class="row g-4">
+    @for (e of exercises(); track e.id) {
+      <div class="col-sm-6 col-lg-4 col-xxl-3">
+        <a class="exercise-card h-100" [routerLink]="['/exercises', e.id]">
+          <img [src]="e.image_url" [alt]="e.name" appImgFallback class="exercise-thumb" loading="lazy" />
+          <div class="p-3">
+            <h6 class="mb-2">{{ e.name }}</h6>
+            <div class="d-flex flex-wrap gap-1 mb-2">
+              <span class="badge badge-soft-primary">{{ e.muscle_group | label: 'muscle' }}</span>
+              <span class="badge" [class]="'badge ' + (e.difficulty | badge)">{{ e.difficulty | label: 'difficulty' }}</span>
+            </div>
+            <small class="text-muted d-block text-truncate"><i class="bi bi-tools me-1"></i>{{ e.equipment || 'Không cần dụng cụ' }}</small>
+          </div>
+        </a>
+      </div>
+    } @empty {
+      <div class="col-12">
+        <div class="card-soft">
+          <app-empty-state icon="bi-search" title="Không tìm thấy bài tập phù hợp." message="Thử từ khóa khác hoặc bỏ bớt bộ lọc."
+            actionLabel="Xóa bộ lọc" (action)="clearFilters()" />
+        </div>
+      </div>
+    }
+  </div>
+}

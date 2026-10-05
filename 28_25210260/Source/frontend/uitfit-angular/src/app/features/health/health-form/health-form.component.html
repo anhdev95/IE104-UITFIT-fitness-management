@@ -1,0 +1,127 @@
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="card-soft">
+      <div class="card-head"><h5><i class="bi bi-clipboard2-pulse me-1 text-primary"></i>Cập nhật chỉ số cơ thể</h5></div>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="row g-3">
+          <div class="col-md-4">
+            <label class="form-label" for="h-date">Ngày đo *</label>
+            <input id="h-date" type="date" class="form-control" formControlName="record_date" [max]="today" />
+            <app-field-error [control]="form.controls.record_date" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="h-weight">Cân nặng (kg) *</label>
+            <input id="h-weight" type="number" step="0.1" min="30" max="300" class="form-control" formControlName="weight"
+              placeholder="70" [class.is-invalid]="form.controls.weight.touched && form.controls.weight.invalid" />
+            <app-field-error [control]="form.controls.weight" />
+          </div>
+          <div class="col-md-4">
+            <label class="form-label" for="h-height">Chiều cao (cm) *</label>
+            <input id="h-height" type="number" step="0.1" min="100" max="250" class="form-control" formControlName="height"
+              placeholder="175" [class.is-invalid]="form.controls.height.touched && form.controls.height.invalid" />
+            <app-field-error [control]="form.controls.height" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label" for="h-waist">Vòng eo (cm)</label>
+            <input id="h-waist" type="number" step="0.1" class="form-control" formControlName="waist" />
+            <app-field-error [control]="form.controls.waist" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label" for="h-chest">Vòng ngực (cm)</label>
+            <input id="h-chest" type="number" step="0.1" class="form-control" formControlName="chest" />
+            <app-field-error [control]="form.controls.chest" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label" for="h-fat">Body fat (%)</label>
+            <input id="h-fat" type="number" step="0.1" class="form-control" formControlName="body_fat"
+              [class.is-invalid]="form.controls.body_fat.invalid" />
+            <app-field-error [control]="form.controls.body_fat" />
+          </div>
+          <div class="col-md-3 col-6">
+            <label class="form-label" for="h-muscle">Muscle mass (kg)</label>
+            <input id="h-muscle" type="number" step="0.1" class="form-control" formControlName="muscle_mass" />
+            <app-field-error [control]="form.controls.muscle_mass" />
+          </div>
+          <div class="col-12">
+            <label class="form-label" for="h-note">Ghi chú</label>
+            <textarea id="h-note" rows="2" class="form-control" formControlName="note" placeholder="Ví dụ: đo buổi sáng, trước khi ăn"></textarea>
+          </div>
+        </div>
+
+        <div class="bmi-preview mt-4">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div>
+              <small class="text-muted d-block">BMI preview</small>
+              <strong class="fs-3">{{ bmiPreview() ? (bmiPreview() | number: '1.2-2') : '—' }}</strong>
+            </div>
+            @if (bmiCategory(); as c) {
+              <span class="badge fs-6 bmi-badge-{{ c.key }}">{{ c.label }}</span>
+            }
+          </div>
+          <div class="bmi-scale">
+            <span class="seg seg-under"></span><span class="seg seg-normal"></span><span class="seg seg-over"></span><span class="seg seg-obese"></span>
+            @if (bmiPreview()) { <i class="bmi-pointer" [style.left.%]="bmiPosition()"></i> }
+          </div>
+          <div class="bmi-scale-labels"><span>&lt; 18.5 Thiếu cân</span><span>18.5–24.9 Bình thường</span><span>25–29.9 Thừa cân</span><span>≥ 30 Béo phì</span></div>
+          <small class="text-muted"><i class="bi bi-info-circle me-1"></i>BMI = cân nặng (kg) / chiều cao (m)². Giá trị chính thức do hệ thống tính khi lưu.</small>
+        </div>
+
+        <div class="text-end mt-3">
+          <button type="submit" class="btn btn-primary px-4" [disabled]="saving()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+            <i class="bi bi-save me-1"></i>Lưu chỉ số
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card-soft mb-4">
+      <div class="card-head">
+        <h5><i class="bi bi-person-check me-1 text-primary"></i>Chỉ số gần nhất</h5>
+        <a routerLink="/progress" class="small">Xem tiến trình</a>
+      </div>
+      @if (latest(); as l) {
+        <div class="latest-grid">
+          <div><span>Cân nặng</span><strong>{{ l.weight | num }} kg</strong></div>
+          <div><span>Chiều cao</span><strong>{{ l.height | num }} cm</strong></div>
+          <div><span>BMI</span><strong>{{ l.bmi | number: '1.2-2' }}</strong><small class="bmi-{{ l.bmi_category?.key }}">{{ l.bmi_category?.label }}</small></div>
+          <div><span>Body fat</span><strong>{{ l.body_fat ? l.body_fat + '%' : '—' }}</strong></div>
+          <div><span>Muscle mass</span><strong>{{ l.muscle_mass ? l.muscle_mass + ' kg' : '—' }}</strong></div>
+          <div><span>Ngày đo</span><strong>{{ l.record_date | date: 'dd/MM/yyyy' }}</strong></div>
+        </div>
+      } @else if (!loading()) {
+        <app-empty-state icon="bi-heart-pulse" title="Chưa có dữ liệu sức khỏe." message="Nhập chỉ số đầu tiên ở form bên cạnh." />
+      }
+    </div>
+
+    <div class="card-soft">
+      <div class="card-head"><h5><i class="bi bi-list-ul me-1 text-primary"></i>Lịch sử chỉ số</h5></div>
+      @if (loading()) {
+        <app-loading [inline]="true" />
+      } @else if (records().length) {
+        <div class="table-responsive scroll-y-400">
+          <table class="table table-modern table-sm mb-0">
+            <thead><tr><th>Ngày</th><th>Kg</th><th>BMI</th><th>Fat</th><th></th></tr></thead>
+            <tbody>
+              @for (r of records(); track r.id) {
+                <tr>
+                  <td>{{ r.record_date | date: 'dd/MM/yy' }}</td>
+                  <td>{{ r.weight | num }}</td>
+                  <td><span class="bmi-{{ r.bmi_category?.key }}">{{ r.bmi | number: '1.1-1' }}</span></td>
+                  <td>{{ r.body_fat | num }}</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-icon text-danger" (click)="remove(r)" title="Xóa"><i class="bi bi-trash3"></i></button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      } @else {
+        <app-empty-state icon="bi-clipboard" title="Chưa có bản ghi nào." />
+      }
+    </div>
+  </div>
+</div>

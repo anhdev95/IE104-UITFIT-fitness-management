@@ -1,0 +1,128 @@
+@if (loading()) {
+  <app-loading />
+} @else if (user(); as u) {
+  <div class="row g-4">
+    <div class="col-xl-4">
+      <div class="card-soft text-center profile-card">
+        <div class="avatar-upload">
+          @if (u.avatar_url) {
+            <img [src]="u.avatar_url" alt="Avatar" class="avatar avatar-xl" />
+          } @else {
+            <span class="avatar avatar-xl avatar-initial">{{ initials() }}</span>
+          }
+          <label class="avatar-upload-btn" title="Đổi ảnh đại diện">
+            @if (uploading()) { <span class="spinner-border spinner-border-sm"></span> } @else { <i class="bi bi-camera"></i> }
+            <input type="file" accept="image/png,image/jpeg,image/webp" hidden (change)="onAvatarSelected($event)" />
+          </label>
+        </div>
+        <h4 class="mt-3 mb-0">{{ u.name }}</h4>
+        <p class="text-muted">{{ u.email }}</p>
+        <div class="profile-metrics">
+          <div><strong>{{ u.profile?.height | num }}</strong><span>cm</span></div>
+          <div><strong>{{ u.profile?.current_weight | num }}</strong><span>kg</span></div>
+          <div><strong>{{ bmi() ? (bmi() | number: '1.1-1') : '—' }}</strong><span>BMI</span></div>
+        </div>
+        <ul class="list-unstyled text-start small mb-0 mt-3">
+          <li class="mb-2"><i class="bi bi-bullseye text-primary me-2"></i>Mục tiêu: <strong>{{ u.profile?.goal | label: 'goal' }}</strong></li>
+          <li class="mb-2"><i class="bi bi-gender-ambiguous text-primary me-2"></i>Giới tính: <strong>{{ u.profile?.gender | label: 'gender' }}</strong></li>
+          <li><i class="bi bi-calendar-check text-primary me-2"></i>Tham gia: <strong>{{ u.created_at | date: 'dd/MM/yyyy' }}</strong></li>
+        </ul>
+        @if (u.profile?.bio) { <p class="profile-bio mt-3 mb-0">"{{ u.profile?.bio }}"</p> }
+      </div>
+    </div>
+
+    <div class="col-xl-8">
+      <div class="card-soft mb-4">
+        <div class="card-head"><h5><i class="bi bi-person-lines-fill me-1 text-primary"></i>Thông tin cá nhân</h5></div>
+        <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="p-name">Họ tên *</label>
+              <input id="p-name" class="form-control" formControlName="name"
+                [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid" />
+              <app-field-error [control]="form.controls.name" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="p-email">Email</label>
+              <input id="p-email" class="form-control" [value]="u.email" disabled />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="p-dob">Ngày sinh</label>
+              <input id="p-dob" type="date" class="form-control" formControlName="date_of_birth" />
+              <app-field-error [control]="form.controls.date_of_birth" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="p-gender">Giới tính</label>
+              <select id="p-gender" class="form-select" formControlName="gender">
+                <option [ngValue]="null">-- Chọn --</option>
+                @for (g of genders; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="p-goal">Mục tiêu</label>
+              <select id="p-goal" class="form-select" formControlName="goal">
+                <option [ngValue]="null">-- Chọn --</option>
+                @for (g of goals; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="p-height">Chiều cao (cm)</label>
+              <input id="p-height" type="number" class="form-control" formControlName="height" step="0.1"
+                [class.is-invalid]="form.controls.height.invalid" />
+              <app-field-error [control]="form.controls.height" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="p-weight">Cân nặng (kg)</label>
+              <input id="p-weight" type="number" class="form-control" formControlName="current_weight" step="0.1"
+                [class.is-invalid]="form.controls.current_weight.invalid" />
+              <app-field-error [control]="form.controls.current_weight" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="p-bio">Giới thiệu</label>
+              <textarea id="p-bio" rows="3" class="form-control" formControlName="bio" placeholder="Đôi nét về bạn..."></textarea>
+              <app-field-error [control]="form.controls.bio" />
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button class="btn btn-primary px-4" type="submit" [disabled]="saving()">
+              @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+              Lưu thay đổi
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <div class="card-soft">
+        <div class="card-head"><h5><i class="bi bi-shield-lock me-1 text-primary"></i>Đổi mật khẩu</h5></div>
+        <form [formGroup]="passwordForm" (ngSubmit)="changePassword()" novalidate>
+          <div class="row g-3">
+            <div class="col-md-4">
+              <label class="form-label" for="pw-current">Mật khẩu hiện tại</label>
+              <input id="pw-current" type="password" class="form-control" formControlName="current_password" autocomplete="current-password" />
+              <app-field-error [control]="passwordForm.controls.current_password" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="pw-new">Mật khẩu mới</label>
+              <input id="pw-new" type="password" class="form-control" formControlName="password" autocomplete="new-password" />
+              <app-field-error [control]="passwordForm.controls.password" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="pw-confirm">Xác nhận mật khẩu mới</label>
+              <input id="pw-confirm" type="password" class="form-control" formControlName="password_confirmation" autocomplete="new-password" />
+              <app-field-error [control]="passwordForm.controls.password_confirmation" />
+              @if (passwordForm.hasError('mismatch') && passwordForm.controls.password_confirmation.touched) {
+                <div class="invalid-feedback d-block">Mật khẩu xác nhận không khớp.</div>
+              }
+            </div>
+          </div>
+          <div class="text-end mt-3">
+            <button class="btn btn-outline-primary px-4" type="submit" [disabled]="savingPassword()">
+              @if (savingPassword()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+              Đổi mật khẩu
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+}

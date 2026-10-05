@@ -1,0 +1,108 @@
+<section class="hero" id="top">
+  <div class="container">
+    <div class="row align-items-center g-5">
+      <div class="col-lg-6">
+        <span class="hero-badge"><i class="bi bi-stars me-1"></i> Ứng dụng fitness cho sinh viên</span>
+        <h1 class="hero-title">Quản lý lịch tập – <span class="text-primary">Theo dõi sức khỏe</span> – Sống khỏe mỗi ngày</h1>
+        <p class="hero-text">UITfit giúp bạn lên kế hoạch tập luyện, ghi nhận chi tiết từng set với reps, kg, RPE,
+          đếm ngược thời gian nghỉ và theo dõi tiến trình cơ thể qua biểu đồ.</p>
+        <div class="d-flex flex-wrap gap-2">
+          <a class="btn btn-primary btn-lg px-4" [routerLink]="auth.isLoggedIn() ? auth.homeUrl() : '/register'">
+            Bắt đầu ngay <i class="bi bi-arrow-right ms-1"></i>
+          </a>
+          <a class="btn btn-light btn-lg px-4" routerLink="/" fragment="features">Tìm hiểu thêm</a>
+        </div>
+        <div class="hero-stats">
+          <div><strong>20+</strong><span>Bài tập</span></div>
+          <div><strong>7</strong><span>Nhóm cơ</span></div>
+          <div><strong>100%</strong><span>Miễn phí</span></div>
+        </div>
+      </div>
+      <div class="col-lg-6">
+        <div class="hero-visual">
+          <div class="mock-card mock-main">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div><small class="text-muted">Buổi tập hôm nay</small><h6 class="mb-0">Push Day</h6></div>
+              <span class="badge badge-soft-warning">Đang thực hiện</span>
+            </div>
+            <div class="mock-row"><span>Bench Press</span><span>4 × 10 · 60kg</span><i class="bi bi-check-circle-fill text-success"></i></div>
+            <div class="mock-row"><span>Incline DB Press</span><span>3 × 12 · 20kg</span><i class="bi bi-check-circle-fill text-success"></i></div>
+            <div class="mock-row"><span>Shoulder Press</span><span>3 × 12 · 20kg</span><i class="bi bi-circle text-muted"></i></div>
+            <div class="progress mt-3" style="height: 8px"><div class="progress-bar" style="width: 60%"></div></div>
+          </div>
+          <div class="mock-card mock-timer">
+            <i class="bi bi-stopwatch text-primary fs-4"></i>
+            <div><strong>01:30</strong><small class="d-block text-muted">Nghỉ giữa set</small></div>
+          </div>
+          <div class="mock-card mock-bmi">
+            <small class="text-muted">BMI</small>
+            <strong>22.86</strong>
+            <span class="badge badge-soft-success">Bình thường</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head">
+      <h2>Tính năng nổi bật</h2>
+      <p>Mọi thứ bạn cần để tập luyện có kế hoạch và đo lường được kết quả.</p>
+    </div>
+    <div class="row g-4">
+      @for (f of features; track f.title) {
+        <div class="col-sm-6 col-lg-3">
+          <div class="feature-card">
+            <div class="feature-icon" [class]="'feature-icon icon-' + f.color"><i class="bi" [class]="f.icon"></i></div>
+            <h5>{{ f.title }}</h5>
+            <p>{{ f.text }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</section>
+
+<section class="section section-alt" id="exercises">
+  <div class="container">
+    <div class="section-head">
+      <h2>Thư viện bài tập</h2>
+      <p>Bài tập được phân loại theo nhóm cơ: Ngực, Lưng, Vai, Chân, Tay, Core và Cardio.</p>
+    </div>
+    <div class="row g-4">
+      @for (e of exercises(); track e.id) {
+        <div class="col-sm-6 col-lg-4">
+          <div class="exercise-card">
+            <img [src]="e.image_url" [alt]="e.name" appImgFallback class="exercise-thumb" />
+            <div class="p-3">
+              <h6 class="mb-1">{{ e.name }}</h6>
+              <div class="d-flex gap-2 flex-wrap">
+                <span class="badge badge-soft-primary">{{ e.muscle_group | label: 'muscle' }}</span>
+                <span class="badge" [class]="'badge ' + (e.difficulty | badge)">{{ e.difficulty | label: 'difficulty' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      } @empty {
+        <p class="text-center text-muted">Đăng nhập để khám phá toàn bộ thư viện bài tập.</p>
+      }
+    </div>
+    <div class="text-center mt-4">
+      <a class="btn btn-primary" [routerLink]="auth.isLoggedIn() ? '/exercises' : '/login'">Xem tất cả bài tập</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="cta-box">
+      <div>
+        <h3 class="mb-1">Sẵn sàng cho buổi tập đầu tiên?</h3>
+        <p class="mb-0 opacity-75">Tạo tài khoản miễn phí và bắt đầu theo dõi tiến trình ngay hôm nay.</p>
+      </div>
+      <a class="btn btn-light btn-lg" routerLink="/register">Đăng ký ngay</a>
+    </div>
+  </div>
+</section>

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 400" width="640" height="400">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#DB2777"/><stop offset="1" stop-color="#F9A8D4"/>
+    </linearGradient>
+  </defs>
+  <rect width="640" height="400" fill="url(#g)"/>
+  <circle cx="540" cy="60" r="120" fill="#fff" opacity=".08"/>
+  <circle cx="80" cy="380" r="140" fill="#fff" opacity=".07"/>
+  <g transform="translate(320 175)" fill="#fff">
+    <rect x="-150" y="-12" width="300" height="24" rx="12" opacity=".95"/>
+    <rect x="-140" y="-62" width="34" height="124" rx="10"/>
+    <rect x="-100" y="-46" width="26" height="92" rx="8" opacity=".9"/>
+    <rect x="106" y="-62" width="34" height="124" rx="10"/>
+    <rect x="74" y="-46" width="26" height="92" rx="8" opacity=".9"/>
+  </g>
+  <text x="320" y="320" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="40" font-weight="700" letter-spacing="6" fill="#fff">CORE</text>
+  <text x="320" y="356" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" fill="#fff" opacity=".8" letter-spacing="3">UITFIT</text>
+</svg>

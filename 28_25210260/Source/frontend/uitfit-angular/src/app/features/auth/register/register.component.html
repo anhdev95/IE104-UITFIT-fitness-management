@@ -1,0 +1,67 @@
+<h2 class="auth-title">Tạo tài khoản</h2>
+<p class="text-muted mb-4">Bắt đầu hành trình sống khỏe cùng UITfit.</p>
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="mb-3">
+    <label class="form-label" for="name">Họ tên</label>
+    <div class="input-icon">
+      <i class="bi bi-person"></i>
+      <input id="name" class="form-control" formControlName="name" placeholder="Nguyễn Văn A" autocomplete="name"
+        [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid" />
+    </div>
+    <app-field-error [control]="form.controls.name" />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="email">Email</label>
+    <div class="input-icon">
+      <i class="bi bi-envelope"></i>
+      <input id="email" type="email" class="form-control" formControlName="email" placeholder="ban@email.com"
+        autocomplete="email" [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid" />
+    </div>
+    <app-field-error [control]="form.controls.email" />
+  </div>
+
+  <div class="row g-3 mb-3">
+    <div class="col-sm-6">
+      <label class="form-label" for="password">Mật khẩu</label>
+      <div class="input-icon">
+        <i class="bi bi-lock"></i>
+        <input id="password" [type]="showPassword() ? 'text' : 'password'" class="form-control" formControlName="password"
+          placeholder="Tối thiểu 6 ký tự" autocomplete="new-password"
+          [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid" />
+        <button type="button" class="input-action" (click)="showPassword.set(!showPassword())" aria-label="Hiện mật khẩu">
+          <i class="bi" [class]="showPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+        </button>
+      </div>
+      <app-field-error [control]="form.controls.password" />
+    </div>
+    <div class="col-sm-6">
+      <label class="form-label" for="password_confirmation">Xác nhận mật khẩu</label>
+      <div class="input-icon">
+        <i class="bi bi-shield-lock"></i>
+        <input id="password_confirmation" [type]="showPassword() ? 'text' : 'password'" class="form-control"
+          formControlName="password_confirmation" placeholder="Nhập lại mật khẩu" autocomplete="new-password"
+          [class.is-invalid]="form.controls.password_confirmation.touched && (form.controls.password_confirmation.invalid || form.hasError('mismatch'))" />
+      </div>
+      <app-field-error [control]="form.controls.password_confirmation" />
+      @if (form.hasError('mismatch') && form.controls.password_confirmation.touched) {
+        <div class="invalid-feedback d-block">Mật khẩu xác nhận không khớp.</div>
+      }
+    </div>
+  </div>
+
+  <div class="form-check mb-4">
+    <input class="form-check-input" type="checkbox" id="terms" formControlName="terms"
+      [class.is-invalid]="form.controls.terms.touched && form.controls.terms.invalid" />
+    <label class="form-check-label" for="terms">Tôi đồng ý với <a href="javascript:void(0)">điều khoản sử dụng</a> của UITfit</label>
+    <app-field-error [control]="form.controls.terms" />
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100 py-2" [disabled]="loading()">
+    @if (loading()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+    Đăng ký
+  </button>
+</form>
+
+<p class="text-center mt-4 mb-0">Đã có tài khoản? <a routerLink="/login" class="fw-semibold">Đăng nhập</a></p>

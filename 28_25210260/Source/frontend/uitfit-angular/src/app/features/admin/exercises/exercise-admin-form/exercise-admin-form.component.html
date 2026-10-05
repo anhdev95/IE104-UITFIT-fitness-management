@@ -1,0 +1,102 @@
+<a routerLink="/admin/exercises" class="back-link"><i class="bi bi-arrow-left me-1"></i>Quản lý bài tập</a>
+
+@if (loading()) {
+  <app-loading />
+} @else {
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="row g-4">
+      <div class="col-xl-8">
+        <div class="card-soft">
+          <div class="card-head"><h5>{{ isEdit() ? 'Sửa bài tập' : 'Thêm bài tập mới' }}</h5></div>
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label" for="e-name">Tên bài tập *</label>
+              <input id="e-name" class="form-control" formControlName="name"
+                [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid" />
+              <app-field-error [control]="form.controls.name" />
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label" for="e-group">Nhóm cơ *</label>
+              <select id="e-group" class="form-select" formControlName="muscle_group">
+                @for (g of groups; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-3 col-6">
+              <label class="form-label" for="e-diff">Mức độ *</label>
+              <select id="e-diff" class="form-select" formControlName="difficulty">
+                @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="e-equip">Thiết bị</label>
+              <input id="e-equip" class="form-control" formControlName="equipment" placeholder="Barbell, Dumbbell..." />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label" for="e-target">Nhóm cơ tác động</label>
+              <input id="e-target" class="form-control" formControlName="target_muscles" placeholder="Ngực giữa, Vai trước, Tay sau" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="e-desc">Mô tả *</label>
+              <textarea id="e-desc" rows="3" class="form-control" formControlName="description"
+                [class.is-invalid]="form.controls.description.touched && form.controls.description.invalid"></textarea>
+              <app-field-error [control]="form.controls.description" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="e-inst">Hướng dẫn * <small class="text-muted">(mỗi bước một dòng)</small></label>
+              <textarea id="e-inst" rows="5" class="form-control" formControlName="instructions"
+                [class.is-invalid]="form.controls.instructions.touched && form.controls.instructions.invalid"></textarea>
+              <app-field-error [control]="form.controls.instructions" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="e-tips">Lưu ý</label>
+              <textarea id="e-tips" rows="2" class="form-control" formControlName="tips"></textarea>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="e-sets">Sets gợi ý *</label>
+              <input id="e-sets" type="number" min="1" class="form-control" formControlName="default_sets" />
+              <app-field-error [control]="form.controls.default_sets" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="e-reps">Reps gợi ý *</label>
+              <input id="e-reps" class="form-control" formControlName="default_reps" placeholder="10-12" />
+              <app-field-error [control]="form.controls.default_reps" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="e-rest">Rest mặc định (giây) *</label>
+              <input id="e-rest" type="number" min="0" class="form-control" formControlName="default_rest_seconds" />
+              <app-field-error [control]="form.controls.default_rest_seconds" />
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="card-soft mb-4">
+          <div class="card-head"><h5>Hình ảnh</h5></div>
+          <img [src]="preview()" alt="Preview" class="w-100 rounded-3 mb-3 detail-image" appImgFallback />
+          <input type="file" class="form-control mb-2" accept="image/*" (change)="onFile($event)" aria-label="Chọn ảnh" />
+          <small class="text-muted d-block mb-2">Hoặc nhập đường dẫn ảnh:</small>
+          <input class="form-control" formControlName="image" placeholder="https://..." aria-label="URL ảnh" />
+          <app-field-error [control]="form.controls.image" />
+        </div>
+        <div class="card-soft mb-4">
+          <div class="card-head"><h5>Khác</h5></div>
+          <label class="form-label" for="e-video">Video (YouTube URL)</label>
+          <input id="e-video" class="form-control mb-3" formControlName="video_url" placeholder="https://youtube.com/watch?v=..." />
+          <app-field-error [control]="form.controls.video_url" />
+          <label class="form-label" for="e-status">Trạng thái</label>
+          <select id="e-status" class="form-select" formControlName="status">
+            <option value="active">Hoạt động</option>
+            <option value="inactive">Ngừng hoạt động</option>
+          </select>
+        </div>
+        <div class="d-flex gap-2">
+          <a routerLink="/admin/exercises" class="btn btn-light flex-grow-1">Hủy</a>
+          <button type="submit" class="btn btn-primary flex-grow-1" [disabled]="saving()">
+            @if (saving()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+            {{ isEdit() ? 'Lưu thay đổi' : 'Thêm bài tập' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </form>
+}

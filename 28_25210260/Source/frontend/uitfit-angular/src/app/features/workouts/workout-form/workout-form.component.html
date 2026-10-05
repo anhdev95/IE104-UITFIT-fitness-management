@@ -1,0 +1,143 @@
+<a routerLink="/workouts" class="back-link"><i class="bi bi-arrow-left me-1"></i>Lịch tập của tôi</a>
+
+@if (loading()) {
+  <app-loading />
+} @else {
+  @if (plan()?.status === 'in_progress') {
+    <div class="alert alert-warning small"><i class="bi bi-exclamation-triangle me-1"></i>
+      Lịch tập đang có buổi tập dở. Thay đổi bài tập chỉ áp dụng cho các buổi tập sau.</div>
+  }
+  <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+    <div class="row g-4">
+      <div class="col-xl-8">
+        <div class="card-soft mb-4">
+          <div class="card-head"><h5><i class="bi bi-info-circle me-1 text-primary"></i>{{ isEdit() ? 'Chỉnh sửa lịch tập' : 'Thông tin lịch tập' }}</h5></div>
+          <div class="row g-3">
+            <div class="col-md-8">
+              <label class="form-label" for="w-name">Tên lịch *</label>
+              <input id="w-name" class="form-control" formControlName="name" placeholder="Ví dụ: Push Day"
+                [class.is-invalid]="form.controls.name.touched && form.controls.name.invalid" />
+              <app-field-error [control]="form.controls.name" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="w-date">Ngày tập</label>
+              <input id="w-date" type="date" class="form-control" formControlName="scheduled_date" />
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="w-diff">Mức độ</label>
+              <select id="w-diff" class="form-select" formControlName="difficulty">
+                <option [ngValue]="null">-- Chọn --</option>
+                @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+              </select>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label" for="w-dur">Thời lượng dự kiến (phút)</label>
+              <input id="w-dur" type="number" min="1" class="form-control" formControlName="estimated_duration" />
+              <app-field-error [control]="form.controls.estimated_duration" />
+            </div>
+            <div class="col-12">
+              <label class="form-label" for="w-desc">Mô tả</label>
+              <textarea id="w-desc" rows="2" class="form-control" formControlName="description" placeholder="Ví dụ: Ngực – Vai – Tay sau"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="card-soft">
+          <div class="card-head">
+            <h5><i class="bi bi-list-ol me-1 text-primary"></i>Bài tập trong lịch ({{ exercises.length }})</h5>
+          </div>
+          @if (form.controls.exercises.touched && form.controls.exercises.hasError('minOne')) {
+            <div class="alert alert-danger py-2 small">Lịch tập phải có ít nhất 1 bài tập.</div>
+          }
+          <div formArrayName="exercises">
+            @for (group of exercises.controls; track group; let i = $index; let first = $first; let last = $last) {
+              <div class="plan-exercise-row" [formGroupName]="i">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <span class="order-badge">{{ i + 1 }}</span>
+                  <img [src]="exerciseOf(group)?.image_url" alt="" class="thumb-sm" appImgFallback />
+                  <div class="flex-grow-1 min-w-0">
+                    <strong class="d-block text-truncate">{{ exerciseOf(group)?.name ?? 'Bài tập' }}</strong>
+                    <small class="text-muted">{{ exerciseOf(group)?.muscle_group | label: 'muscle' }}</small>
+                  </div>
+                  <div class="btn-group btn-group-sm">
+                    <button type="button" class="btn btn-light" (click)="move(i, -1)" [disabled]="first" title="Lên"><i class="bi bi-arrow-up"></i></button>
+                    <button type="button" class="btn btn-light" (click)="move(i, 1)" [disabled]="last" title="Xuống"><i class="bi bi-arrow-down"></i></button>
+                    <button type="button" class="btn btn-light text-danger" (click)="removeExercise(i)" title="Xóa"><i class="bi bi-x-lg"></i></button>
+                  </div>
+                </div>
+                <div class="row g-2">
+                  <div class="col-6 col-md-2">
+                    <label class="form-label small">Sets</label>
+                    <input type="number" min="1" class="form-control form-control-sm" formControlName="target_sets"
+                      [class.is-invalid]="group.controls['target_sets'].invalid && group.controls['target_sets'].touched" />
+                    <app-field-error [control]="group.controls['target_sets']" />
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <label class="form-label small">Reps</label>
+                    <input class="form-control form-control-sm" formControlName="target_reps" placeholder="10 / 8-12"
+                      [class.is-invalid]="group.controls['target_reps'].invalid && group.controls['target_reps'].touched" />
+                    <app-field-error [control]="group.controls['target_reps']" />
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <label class="form-label small">Kg</label>
+                    <input type="number" min="0" step="0.5" class="form-control form-control-sm" formControlName="target_weight" placeholder="—" />
+                    <app-field-error [control]="group.controls['target_weight']" />
+                  </div>
+                  <div class="col-6 col-md-2">
+                    <label class="form-label small">Nghỉ (giây)</label>
+                    <input type="number" min="0" step="15" class="form-control form-control-sm" formControlName="rest_seconds"
+                      [class.is-invalid]="group.controls['rest_seconds'].invalid && group.controls['rest_seconds'].touched" />
+                    <app-field-error [control]="group.controls['rest_seconds']" />
+                  </div>
+                  <div class="col-12 col-md-4">
+                    <label class="form-label small">Ghi chú</label>
+                    <input class="form-control form-control-sm" formControlName="note" placeholder="Ví dụ: tăng tạ set cuối" />
+                  </div>
+                </div>
+              </div>
+            } @empty {
+              <div class="empty-inline"><i class="bi bi-arrow-right-circle me-1"></i>Chọn bài tập từ thư viện bên phải để thêm vào lịch.</div>
+            }
+          </div>
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            <a routerLink="/workouts" class="btn btn-light">Hủy</a>
+            <button type="submit" class="btn btn-primary px-4" [disabled]="saving()">
+              @if (saving()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+              <i class="bi bi-save me-1"></i>{{ isEdit() ? 'Lưu thay đổi' : 'Tạo lịch tập' }}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-xl-4">
+        <div class="card-soft picker sticky-xl">
+          <div class="card-head"><h5><i class="bi bi-journal-plus me-1 text-primary"></i>Thêm bài tập</h5></div>
+          <div class="input-icon mb-2">
+            <i class="bi bi-search"></i>
+            <input type="search" class="form-control" placeholder="Tìm bài tập..." [ngModel]="pickerSearch()"
+              (ngModelChange)="pickerSearch.set($event)" [ngModelOptions]="{ standalone: true }" aria-label="Tìm bài tập" />
+          </div>
+          <div class="chip-group chip-sm mb-2">
+            @for (g of groups; track g.value) {
+              <button type="button" class="chip" [class.active]="pickerGroup() === g.value" (click)="pickerGroup.set(g.value)">{{ g.label }}</button>
+            }
+          </div>
+          <div class="picker-list">
+            @for (e of filteredLibrary(); track e.id) {
+              <button type="button" class="picker-item" (click)="addExercise(e)">
+                <img [src]="e.image_url" alt="" class="thumb-sm" appImgFallback />
+                <span class="flex-grow-1 text-start min-w-0">
+                  <strong class="d-block text-truncate">{{ e.name }}</strong>
+                  <small class="text-muted">{{ e.muscle_group | label: 'muscle' }} · {{ e.default_sets }}×{{ e.default_reps }}</small>
+                </span>
+                <i class="bi" [class]="isAdded(e) ? 'bi-check-circle-fill text-success' : 'bi-plus-circle text-primary'"></i>
+              </button>
+            } @empty {
+              <p class="text-muted small text-center my-3">Không tìm thấy bài tập phù hợp.</p>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+}

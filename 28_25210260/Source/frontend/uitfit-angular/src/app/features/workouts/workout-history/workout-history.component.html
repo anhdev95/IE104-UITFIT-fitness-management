@@ -1,0 +1,76 @@
+<div class="card-soft mb-4">
+  <form class="row g-3 align-items-end" (ngSubmit)="load()">
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="f-from">Từ ngày</label>
+      <input id="f-from" type="date" class="form-control" name="from" [(ngModel)]="filter.from" />
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="f-to">Đến ngày</label>
+      <input id="f-to" type="date" class="form-control" name="to" [(ngModel)]="filter.to" />
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="f-status">Trạng thái</label>
+      <select id="f-status" class="form-select" name="status" [(ngModel)]="filter.status">
+        <option value="">Tất cả</option>
+        @for (s of statuses; track s.value) { <option [value]="s.value">{{ s.label }}</option> }
+      </select>
+    </div>
+    <div class="col-6 col-lg-3">
+      <label class="form-label small" for="f-search">Tên lịch</label>
+      <input id="f-search" type="search" class="form-control" name="search" [(ngModel)]="filter.search" placeholder="Push Day..." />
+    </div>
+    <div class="col-lg-3 d-flex gap-2">
+      <button type="submit" class="btn btn-primary flex-grow-1"><i class="bi bi-funnel me-1"></i>Lọc</button>
+      <button type="button" class="btn btn-light" (click)="reset()">Đặt lại</button>
+    </div>
+  </form>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4"><div class="stat-card"><div class="stat-icon icon-primary"><i class="bi bi-trophy"></i></div>
+    <div><span class="stat-label">Buổi hoàn thành</span><strong class="stat-value">{{ totals().count }}</strong></div></div></div>
+  <div class="col-md-4"><div class="stat-card"><div class="stat-icon icon-warning"><i class="bi bi-clock"></i></div>
+    <div><span class="stat-label">Tổng thời gian</span><strong class="stat-value">{{ totals().seconds | duration }}</strong></div></div></div>
+  <div class="col-md-4"><div class="stat-card"><div class="stat-icon icon-success"><i class="bi bi-box"></i></div>
+    <div><span class="stat-label">Tổng volume</span><strong class="stat-value">{{ totals().volume | number: '1.0-0' }} kg</strong></div></div></div>
+</div>
+
+<div class="card-soft">
+  @if (loading()) {
+    <app-loading />
+  } @else if (sessions().length) {
+    <div class="table-responsive">
+      <table class="table table-modern align-middle mb-0">
+        <thead>
+          <tr><th>Ngày</th><th>Tên lịch</th><th>Thời gian</th><th class="text-center">Số bài</th><th class="text-center">Sets</th><th class="text-end">Tổng volume</th><th>Trạng thái</th><th></th></tr>
+        </thead>
+        <tbody>
+          @for (s of sessions(); track s.id) {
+            <tr>
+              <td>
+                <strong class="d-block">{{ s.started_at | date: 'dd/MM/yyyy' }}</strong>
+                <small class="text-muted">{{ s.started_at | date: 'HH:mm' }}</small>
+              </td>
+              <td class="fw-semibold">{{ s.plan_name }}</td>
+              <td>{{ s.duration_seconds | duration }}</td>
+              <td class="text-center">{{ s.summary?.total_exercises }}</td>
+              <td class="text-center">{{ s.summary?.completed_sets }}/{{ s.summary?.total_sets }}</td>
+              <td class="text-end fw-semibold">{{ s.summary?.total_volume | number: '1.0-1' }} kg</td>
+              <td><span class="badge" [class]="'badge ' + (s.status | badge)">{{ s.status | label: 'sessionStatus' }}</span></td>
+              <td class="text-end">
+                @if (s.status === 'in_progress') {
+                  <a class="btn btn-sm btn-primary" [routerLink]="['/workout-session', s.id]"><i class="bi bi-play-fill"></i> Tiếp tục</a>
+                } @else {
+                  <a class="btn btn-sm btn-light" [routerLink]="['/history', s.id]">Chi tiết</a>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <app-empty-state icon="bi-clock-history" title="Chưa có buổi tập nào." message="Hoàn thành một buổi tập để xem lịch sử tại đây."
+      actionLabel="Đến lịch tập" actionLink="/workouts" />
+  }
+</div>

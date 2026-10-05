@@ -1,0 +1,66 @@
+@if (loading()) {
+  <app-loading />
+} @else if (data(); as d) {
+  <div class="row g-3 mb-4">
+    @for (k of kpis(); track k.label) {
+      <div class="col-6 col-xl-3">
+        <div class="stat-card">
+          <div class="stat-icon" [class]="'stat-icon icon-' + k.color"><i class="bi" [class]="k.icon"></i></div>
+          <div><span class="stat-label">{{ k.label }}</span><strong class="stat-value">{{ k.value }}</strong></div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="card-soft h-100">
+        <div class="card-head"><h5><i class="bi bi-bar-chart me-1 text-primary"></i>Số buổi tập theo tháng</h5></div>
+        <app-chart type="bar" [data]="sessionsChart()" [options]="{ scales: { y: { beginAtZero: true, ticks: { precision: 0 } }, x: { grid: { display: false } } } }" [height]="300" />
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card-soft h-100">
+        <div class="card-head">
+          <h5><i class="bi bi-fire me-1 text-danger"></i>Bài tập phổ biến</h5>
+          <a routerLink="/admin/exercises" class="small">Quản lý</a>
+        </div>
+        @for (e of d.popularExercises; track e.id; let i = $index) {
+          <div class="popular-item">
+            <span class="order-badge">{{ i + 1 }}</span>
+            <div class="flex-grow-1">
+              <div class="d-flex justify-content-between"><strong>{{ e.name }}</strong><small class="text-muted">{{ e.usage_count }} lịch</small></div>
+              <div class="progress mt-1" style="height: 6px"><div class="progress-bar" [style.width.%]="(e.usage_count / maxUsage()) * 100"></div></div>
+              <small class="text-muted">{{ e.muscle_group | label: 'muscle' }}</small>
+            </div>
+          </div>
+        } @empty {
+          <app-empty-state icon="bi-collection" title="Chưa có dữ liệu" />
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="card-soft mt-4">
+    <div class="card-head">
+      <h5><i class="bi bi-person-plus me-1 text-primary"></i>Người dùng mới</h5>
+      <a routerLink="/admin/users" class="small">Xem tất cả</a>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-modern align-middle mb-0">
+        <thead><tr><th>Người dùng</th><th>Email</th><th>Mục tiêu</th><th>Ngày đăng ký</th><th>Trạng thái</th></tr></thead>
+        <tbody>
+          @for (u of d.newUsers; track u.id) {
+            <tr>
+              <td class="fw-semibold">{{ u.name }}</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.profile?.goal | label: 'goal' }}</td>
+              <td>{{ u.created_at | date: 'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [class]="'badge ' + (u.status | badge)">{{ u.status | label: 'userStatus' }}</span></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+}

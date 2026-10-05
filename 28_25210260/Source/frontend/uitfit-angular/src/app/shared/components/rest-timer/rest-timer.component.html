@@ -1,0 +1,51 @@
+<div class="rest-timer card-soft" [class]="'rest-timer card-soft timer-' + state()">
+  <div class="d-flex align-items-center justify-content-between mb-2">
+    <h6 class="mb-0"><i class="bi bi-stopwatch me-1"></i>Thời gian nghỉ</h6>
+    <button type="button" class="btn btn-sm btn-light" (click)="toggleSound()"
+      [title]="soundEnabled() ? 'Tắt âm thanh' : 'Bật âm thanh'">
+      <i class="bi" [class]="soundEnabled() ? 'bi-volume-up-fill' : 'bi-volume-mute-fill'"></i>
+    </button>
+  </div>
+
+  <div class="timer-ring">
+    <svg viewBox="0 0 120 120" aria-hidden="true">
+      <circle class="ring-bg" cx="60" cy="60" [attr.r]="radius" />
+      <circle class="ring-fg" cx="60" cy="60" [attr.r]="radius"
+        [attr.stroke-dasharray]="circumference" [attr.stroke-dashoffset]="dashOffset()" />
+    </svg>
+    <div class="timer-text">
+      <span class="timer-value">{{ displaySeconds() | duration: 'clock' }}</span>
+      <small>
+        @switch (state()) {
+          @case ('running') { Đang nghỉ }
+          @case ('paused') { Tạm dừng }
+          @case ('finished') { Hết giờ! }
+          @default { Sẵn sàng }
+        }
+      </small>
+    </div>
+  </div>
+
+  <p class="timer-label">{{ label() }}</p>
+
+  <div class="timer-actions">
+    @switch (state()) {
+      @case ('running') {
+        <button type="button" class="btn btn-warning" (click)="pause()"><i class="bi bi-pause-fill"></i> Tạm dừng</button>
+      }
+      @case ('paused') {
+        <button type="button" class="btn btn-primary" (click)="resume()"><i class="bi bi-play-fill"></i> Tiếp tục</button>
+      }
+      @default {
+        <button type="button" class="btn btn-primary" (click)="start()"><i class="bi bi-play-fill"></i> Bắt đầu</button>
+      }
+    }
+    <button type="button" class="btn btn-light" (click)="add30Seconds()"><i class="bi bi-plus"></i>30s</button>
+    <button type="button" class="btn btn-light" (click)="skip()" [disabled]="state() === 'idle'">
+      <i class="bi bi-skip-forward-fill"></i> Bỏ qua
+    </button>
+    <button type="button" class="btn btn-light" (click)="reset()" title="Đặt lại">
+      <i class="bi bi-arrow-counterclockwise"></i>
+    </button>
+  </div>
+</div>

@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+vendor/
+
+# Markdown
+*.md
+
+# Build / cache
+dist/
+.angular/
+
+# Laravel
+.env
+.env.backup
+.env.production
+storage/logs/*.log
+public/storage
+
+# Bài nộp đóng gói
+*.zip
+
+# Hệ điều hành / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# File báo cáo mẫu của môn khác (chỉ dùng làm template)
+Bao_cao_IE221_*.docx

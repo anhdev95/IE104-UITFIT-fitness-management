@@ -1,0 +1,70 @@
+<a routerLink="/workouts" class="back-link"><i class="bi bi-arrow-left me-1"></i>Lịch tập của tôi</a>
+
+@if (loading()) {
+  <app-loading />
+} @else if (plan(); as p) {
+  <div class="card-soft mb-4">
+    <div class="d-flex flex-wrap gap-3 justify-content-between align-items-start">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h2 class="mb-0">{{ p.name }}</h2>
+          <span class="badge" [class]="'badge ' + (p.status | badge)">{{ p.status | label: 'planStatus' }}</span>
+        </div>
+        @if (p.description) { <p class="text-muted mb-2">{{ p.description }}</p> }
+        <div class="plan-meta">
+          <span><i class="bi bi-calendar3"></i>{{ p.scheduled_date ? (p.scheduled_date | date: 'EEEE, dd/MM/yyyy') : 'Chưa đặt ngày' }}</span>
+          <span><i class="bi bi-list-check"></i>{{ p.exercises_count }} bài · {{ p.total_sets }} sets</span>
+          @if (p.estimated_duration) { <span><i class="bi bi-clock"></i>{{ p.estimated_duration }} phút</span> }
+          @if (p.difficulty) { <span><i class="bi bi-bar-chart"></i>{{ p.difficulty | label: 'difficulty' }}</span> }
+        </div>
+      </div>
+      <div class="d-flex gap-2">
+        <a class="btn btn-light" [routerLink]="['/workouts', p.id, 'edit']"><i class="bi bi-pencil me-1"></i>Sửa</a>
+        <button class="btn btn-light text-danger" (click)="remove()"><i class="bi bi-trash3 me-1"></i>Xóa</button>
+        <button class="btn btn-primary" (click)="start()" [disabled]="starting()">
+          @if (starting()) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          <i class="bi bi-play-fill me-1"></i>{{ p.active_session_id ? 'Tiếp tục tập' : (p.status === 'completed' ? 'Tập lại' : 'Bắt đầu tập') }}
+        </button>
+      </div>
+    </div>
+    @if (p.active_session_id) {
+      <div class="d-flex justify-content-between small mt-3 mb-1"><span>Tiến độ buổi tập hiện tại</span><strong>{{ p.progress }}%</strong></div>
+      <div class="progress" style="height: 8px"><div class="progress-bar" [style.width.%]="p.progress"></div></div>
+    }
+  </div>
+
+  <div class="card-soft">
+    <div class="card-head"><h5><i class="bi bi-list-ol me-1 text-primary"></i>Danh sách bài tập</h5></div>
+    @if (p.exercises?.length) {
+      <div class="table-responsive">
+        <table class="table table-modern align-middle mb-0">
+          <thead><tr><th>#</th><th>Bài tập</th><th class="text-center">Sets</th><th class="text-center">Reps</th><th class="text-center">Kg</th><th class="text-center">Nghỉ</th><th>Ghi chú</th></tr></thead>
+          <tbody>
+            @for (pe of p.exercises; track pe.id) {
+              <tr>
+                <td><span class="order-badge">{{ pe.order_index }}</span></td>
+                <td>
+                  <a class="d-flex align-items-center gap-2 text-reset" [routerLink]="['/exercises', pe.exercise_id]">
+                    <img [src]="pe.exercise?.image_url" alt="" class="thumb-sm" appImgFallback />
+                    <span><strong class="d-block">{{ pe.exercise?.name }}</strong><small class="text-muted">{{ pe.exercise?.muscle_group | label: 'muscle' }}</small></span>
+                  </a>
+                </td>
+                <td class="text-center fw-semibold">{{ pe.target_sets }}</td>
+                <td class="text-center">{{ pe.target_reps }}</td>
+                <td class="text-center">{{ pe.target_weight | num }}</td>
+                <td class="text-center">{{ pe.rest_seconds | duration }}</td>
+                <td class="text-muted small">{{ pe.note || '—' }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <app-empty-state icon="bi-list" title="Lịch tập chưa có bài tập" actionLabel="Thêm bài tập" [actionLink]="'/workouts/' + p.id + '/edit'" />
+    }
+  </div>
+} @else {
+  <div class="card-soft">
+    <app-empty-state icon="bi-question-circle" title="Không tìm thấy lịch tập" actionLabel="Quay lại" actionLink="/workouts" />
+  </div>
+}

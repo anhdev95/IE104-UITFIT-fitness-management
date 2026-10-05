@@ -1,0 +1,52 @@
+<h2 class="auth-title">Đăng nhập</h2>
+<p class="text-muted mb-4">Chào mừng bạn quay lại UITfit 👋</p>
+
+@if (errorMessage()) {
+  <div class="alert alert-danger py-2 small"><i class="bi bi-exclamation-circle me-1"></i>{{ errorMessage() }}</div>
+}
+
+<form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+  <div class="mb-3">
+    <label class="form-label" for="email">Email</label>
+    <div class="input-icon">
+      <i class="bi bi-envelope"></i>
+      <input id="email" type="email" class="form-control" formControlName="email" placeholder="ban@email.com"
+        autocomplete="email" [class.is-invalid]="form.controls.email.touched && form.controls.email.invalid" />
+    </div>
+    <app-field-error [control]="form.controls.email" />
+  </div>
+
+  <div class="mb-3">
+    <label class="form-label" for="password">Mật khẩu</label>
+    <div class="input-icon">
+      <i class="bi bi-lock"></i>
+      <input id="password" [type]="showPassword() ? 'text' : 'password'" class="form-control" formControlName="password"
+        placeholder="••••••" autocomplete="current-password"
+        [class.is-invalid]="form.controls.password.touched && form.controls.password.invalid" />
+      <button type="button" class="input-action" (click)="showPassword.set(!showPassword())" aria-label="Hiện mật khẩu">
+        <i class="bi" [class]="showPassword() ? 'bi-eye-slash' : 'bi-eye'"></i>
+      </button>
+    </div>
+    <app-field-error [control]="form.controls.password" />
+  </div>
+
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <div class="form-check">
+      <input class="form-check-input" type="checkbox" id="remember" formControlName="remember" />
+      <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
+    </div>
+  </div>
+
+  <button type="submit" class="btn btn-primary w-100 py-2" [disabled]="loading()">
+    @if (loading()) { <span class="spinner-border spinner-border-sm me-2"></span> }
+    Đăng nhập
+  </button>
+</form>
+
+<div class="demo-accounts">
+  <small class="text-muted">Tài khoản demo:</small>
+  <button type="button" class="btn btn-sm btn-light" (click)="fillDemo('user')"><i class="bi bi-person"></i> User</button>
+  <button type="button" class="btn btn-sm btn-light" (click)="fillDemo('admin')"><i class="bi bi-shield-lock"></i> Admin</button>
+</div>
+
+<p class="text-center mt-4 mb-0">Chưa có tài khoản? <a routerLink="/register" class="fw-semibold">Đăng ký ngay</a></p>

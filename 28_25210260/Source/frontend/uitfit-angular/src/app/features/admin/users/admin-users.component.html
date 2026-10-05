@@ -1,0 +1,101 @@
+<div class="card-soft mb-4">
+  <form class="row g-3 align-items-end" (ngSubmit)="load()">
+    <div class="col-lg-5">
+      <label class="form-label small" for="u-search">Tìm kiếm</label>
+      <div class="input-icon">
+        <i class="bi bi-search"></i>
+        <input id="u-search" type="search" class="form-control" name="search" [(ngModel)]="filter.search" placeholder="Tên hoặc email..." />
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="u-role">Vai trò</label>
+      <select id="u-role" class="form-select" name="role" [(ngModel)]="filter.role" (ngModelChange)="load()">
+        <option value="">Tất cả</option><option value="user">Người dùng</option><option value="admin">Quản trị viên</option>
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="u-status">Trạng thái</label>
+      <select id="u-status" class="form-select" name="status" [(ngModel)]="filter.status" (ngModelChange)="load()">
+        <option value="">Tất cả</option><option value="active">Hoạt động</option><option value="locked">Đã khóa</option>
+      </select>
+    </div>
+    <div class="col-lg-3"><button type="submit" class="btn btn-primary w-100"><i class="bi bi-funnel me-1"></i>Lọc</button></div>
+  </form>
+</div>
+
+<div class="card-soft">
+  <div class="card-head"><h5>Danh sách người dùng ({{ users().length }})</h5></div>
+  @if (loading()) {
+    <app-loading />
+  } @else if (users().length) {
+    <div class="table-responsive">
+      <table class="table table-modern align-middle mb-0">
+        <thead><tr><th>ID</th><th>Avatar</th><th>Họ tên</th><th>Email</th><th>Vai trò</th><th>Ngày đăng ký</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr></thead>
+        <tbody>
+          @for (u of users(); track u.id) {
+            <tr>
+              <td class="text-muted">#{{ u.id }}</td>
+              <td>
+                @if (u.avatar_url) { <img [src]="u.avatar_url" alt="" class="avatar avatar-sm" /> }
+                @else { <span class="avatar avatar-sm avatar-initial">{{ initials(u.name) }}</span> }
+              </td>
+              <td class="fw-semibold">{{ u.name }}</td>
+              <td>{{ u.email }}</td>
+              <td><span class="badge" [class]="u.role === 'admin' ? 'badge badge-soft-primary' : 'badge badge-soft-secondary'">{{ u.role | label: 'role' }}</span></td>
+              <td>{{ u.created_at | date: 'dd/MM/yyyy' }}</td>
+              <td><span class="badge" [class]="'badge ' + (u.status | badge)">{{ u.status | label: 'userStatus' }}</span></td>
+              <td class="text-end text-nowrap">
+                <button type="button" class="btn btn-sm btn-light" (click)="view(u)" title="Xem"><i class="bi bi-eye"></i></button>
+                @if (u.role !== 'admin') {
+                  <button type="button" class="btn btn-sm ms-1" [class]="u.status === 'active' ? 'btn btn-sm ms-1 btn-light text-danger' : 'btn btn-sm ms-1 btn-light text-success'"
+                    (click)="toggleLock(u)" [title]="u.status === 'active' ? 'Khóa' : 'Mở khóa'">
+                    <i class="bi" [class]="u.status === 'active' ? 'bi-lock' : 'bi-unlock'"></i> {{ u.status === 'active' ? 'Khóa' : 'Mở khóa' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <app-empty-state icon="bi-people" title="Không tìm thấy người dùng phù hợp." />
+  }
+</div>
+
+@if (detail(); as d) {
+  <div class="modal-backdrop-custom" (click)="detail.set(null)"></div>
+  <div class="confirm-dialog text-start user-detail" role="dialog" aria-modal="true">
+    <button type="button" class="btn-close position-absolute top-0 end-0 m-3" aria-label="Đóng" (click)="detail.set(null)"></button>
+    <div class="d-flex align-items-center gap-3 mb-3">
+      @if (d.user.avatar_url) { <img [src]="d.user.avatar_url" alt="" class="avatar avatar-lg" /> }
+      @else { <span class="avatar avatar-lg avatar-initial">{{ initials(d.user.name) }}</span> }
+      <div>
+        <h5 class="mb-0">{{ d.user.name }}</h5>
+        <small class="text-muted">{{ d.user.email }}</small><br />
+        <span class="badge" [class]="'badge ' + (d.user.status | badge)">{{ d.user.status | label: 'userStatus' }}</span>
+      </div>
+    </div>
+    <div class="summary-grid summary-grid-sm mb-3">
+      <div><span>Lịch tập</span><strong>{{ d.user.workout_plans_count }}</strong></div>
+      <div><span>Buổi tập</span><strong>{{ d.completed_sessions }}</strong></div>
+      <div><span>Lần đo</span><strong>{{ d.user.health_records_count }}</strong></div>
+    </div>
+    <ul class="list-unstyled small mb-0">
+      <li class="mb-1"><strong>Vai trò:</strong> {{ d.user.role | label: 'role' }}</li>
+      <li class="mb-1"><strong>Giới tính:</strong> {{ d.user.profile?.gender | label: 'gender' }}</li>
+      <li class="mb-1"><strong>Mục tiêu:</strong> {{ d.user.profile?.goal | label: 'goal' }}</li>
+      <li class="mb-1"><strong>Chiều cao / Cân nặng:</strong> {{ d.user.profile?.height | num }} cm / {{ d.user.profile?.current_weight | num }} kg</li>
+      @if (d.latest_health) {
+        <li class="mb-1"><strong>BMI gần nhất:</strong> {{ d.latest_health.bmi | num: '1.2-2' }} ({{ d.latest_health.bmi_category?.label }}) – {{ d.latest_health.record_date | date: 'dd/MM/yyyy' }}</li>
+      }
+      <li><strong>Ngày đăng ký:</strong> {{ d.user.created_at | date: 'dd/MM/yyyy HH:mm' }}</li>
+    </ul>
+    @if (d.user.role !== 'admin') {
+      <button type="button" class="btn w-100 mt-3" [class]="d.user.status === 'active' ? 'btn w-100 mt-3 btn-outline-danger' : 'btn w-100 mt-3 btn-outline-success'" (click)="toggleLock(d.user)">
+        <i class="bi" [class]="d.user.status === 'active' ? 'bi-lock' : 'bi-unlock'"></i>
+        {{ d.user.status === 'active' ? 'Khóa tài khoản' : 'Mở khóa tài khoản' }}
+      </button>
+    }
+  </div>
+}

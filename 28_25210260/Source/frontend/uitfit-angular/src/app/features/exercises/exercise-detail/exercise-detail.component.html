@@ -1,0 +1,96 @@
+<a routerLink="/exercises" class="back-link"><i class="bi bi-arrow-left me-1"></i>Thư viện bài tập</a>
+
+@if (loading()) {
+  <app-loading />
+} @else if (notFound()) {
+  <div class="card-soft">
+    <app-empty-state icon="bi-question-circle" title="Không tìm thấy bài tập" message="Bài tập không tồn tại hoặc đã ngừng hoạt động."
+      actionLabel="Quay lại thư viện" actionLink="/exercises" />
+  </div>
+} @else if (exercise(); as e) {
+  <div class="row g-4">
+    <div class="col-lg-5">
+      <div class="card-soft p-0 overflow-hidden mb-4">
+        @if (embedUrl()) {
+          <div class="ratio ratio-16x9">
+            <iframe [src]="embedUrl()" title="Video hướng dẫn" allowfullscreen></iframe>
+          </div>
+        } @else {
+          <img [src]="e.image_url" [alt]="e.name" appImgFallback class="w-100 detail-image" />
+        }
+      </div>
+      <div class="card-soft">
+        <h6 class="mb-3"><i class="bi bi-sliders me-1 text-primary"></i>Gợi ý tập luyện</h6>
+        <div class="suggest-grid">
+          <div><span>Sets</span><strong>{{ e.default_sets }}</strong></div>
+          <div><span>Reps</span><strong>{{ e.default_reps }}</strong></div>
+          <div><span>Nghỉ</span><strong>{{ e.default_rest_seconds | duration }}</strong></div>
+        </div>
+        <button type="button" class="btn btn-primary w-100 mt-3" (click)="openAddModal()">
+          <i class="bi bi-calendar-plus me-1"></i>Thêm vào lịch tập
+        </button>
+        @if (e.video_url && !embedUrl()) {
+          <a class="btn btn-light w-100 mt-2" [href]="e.video_url" target="_blank" rel="noopener">
+            <i class="bi bi-play-btn me-1"></i>Xem video hướng dẫn
+          </a>
+        }
+      </div>
+    </div>
+
+    <div class="col-lg-7">
+      <div class="card-soft">
+        <h2 class="mb-2">{{ e.name }}</h2>
+        <div class="d-flex flex-wrap gap-2 mb-3">
+          <span class="badge badge-soft-primary"><i class="bi bi-bullseye me-1"></i>{{ e.muscle_group | label: 'muscle' }}</span>
+          <span class="badge" [class]="'badge ' + (e.difficulty | badge)"><i class="bi bi-bar-chart me-1"></i>{{ e.difficulty | label: 'difficulty' }}</span>
+          <span class="badge badge-soft-secondary"><i class="bi bi-tools me-1"></i>{{ e.equipment || 'Không cần dụng cụ' }}</span>
+        </div>
+        <p class="lead-text">{{ e.description }}</p>
+
+        @if (targetMuscles().length) {
+          <h6 class="section-label">Nhóm cơ tác động</h6>
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            @for (m of targetMuscles(); track m) { <span class="chip chip-static">{{ m }}</span> }
+          </div>
+        }
+
+        <h6 class="section-label">Hướng dẫn từng bước</h6>
+        <ol class="step-list">
+          @for (step of e.instruction_steps; track $index) { <li>{{ step }}</li> }
+        </ol>
+
+        @if (e.tips) {
+          <div class="tip-box">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div><strong>Lưu ý</strong><p class="mb-0">{{ e.tips }}</p></div>
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  @if (showAddModal()) {
+    <div class="modal-backdrop-custom" (click)="showAddModal.set(false)"></div>
+    <div class="confirm-dialog text-start" role="dialog" aria-modal="true">
+      <h5 class="mb-1">Thêm “{{ e.name }}” vào lịch tập</h5>
+      <p class="text-muted small">Chọn lịch tập chưa bắt đầu hoặc tạo lịch mới.</p>
+      <div class="plan-pick">
+        <label class="plan-option" [class.active]="selectedPlan() === 'new'">
+          <input type="radio" name="plan" [checked]="selectedPlan() === 'new'" (change)="selectedPlan.set('new')" />
+          <i class="bi bi-plus-circle text-primary"></i> Tạo lịch tập mới
+        </label>
+        @for (p of plans(); track p.id) {
+          <label class="plan-option" [class.active]="selectedPlan() === p.id">
+            <input type="radio" name="plan" [checked]="selectedPlan() === p.id" (change)="selectedPlan.set(p.id)" />
+            <span class="flex-grow-1">{{ p.name }}</span>
+            <small class="text-muted">{{ p.exercises_count }} bài</small>
+          </label>
+        }
+      </div>
+      <div class="d-flex gap-2 justify-content-end mt-3">
+        <button type="button" class="btn btn-light" (click)="showAddModal.set(false)">Hủy</button>
+        <button type="button" class="btn btn-primary" (click)="confirmAdd()">Tiếp tục</button>
+      </div>
+    </div>
+  }
+}

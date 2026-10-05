@@ -1,0 +1,75 @@
+<div class="card-soft mb-4">
+  <form class="row g-3 align-items-end" (ngSubmit)="load()">
+    <div class="col-lg-4">
+      <label class="form-label small" for="a-search">Tìm kiếm</label>
+      <div class="input-icon">
+        <i class="bi bi-search"></i>
+        <input id="a-search" type="search" class="form-control" name="search" [(ngModel)]="filter.search" placeholder="Tên bài tập..." />
+      </div>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="a-group">Nhóm cơ</label>
+      <select id="a-group" class="form-select" name="muscle_group" [(ngModel)]="filter.muscle_group" (ngModelChange)="load()">
+        <option value="">Tất cả</option>
+        @for (g of groups; track g.value) { <option [value]="g.value">{{ g.label }}</option> }
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="a-diff">Độ khó</label>
+      <select id="a-diff" class="form-select" name="difficulty" [(ngModel)]="filter.difficulty" (ngModelChange)="load()">
+        <option value="">Tất cả</option>
+        @for (d of difficulties; track d.value) { <option [value]="d.value">{{ d.label }}</option> }
+      </select>
+    </div>
+    <div class="col-6 col-lg-2">
+      <label class="form-label small" for="a-status">Trạng thái</label>
+      <select id="a-status" class="form-select" name="status" [(ngModel)]="filter.status" (ngModelChange)="load()">
+        <option value="">Tất cả</option>
+        <option value="active">Hoạt động</option>
+        <option value="inactive">Ngừng hoạt động</option>
+      </select>
+    </div>
+    <div class="col-6 col-lg-2 d-flex gap-2">
+      <button type="submit" class="btn btn-light flex-grow-1"><i class="bi bi-funnel"></i></button>
+      <button type="button" class="btn btn-light" (click)="reset()" title="Đặt lại"><i class="bi bi-arrow-counterclockwise"></i></button>
+    </div>
+  </form>
+</div>
+
+<div class="card-soft">
+  <div class="card-head">
+    <h5>Danh sách bài tập ({{ exercises().length }})</h5>
+    <a routerLink="/admin/exercises/create" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Thêm bài tập</a>
+  </div>
+  @if (loading()) {
+    <app-loading />
+  } @else if (exercises().length) {
+    <div class="table-responsive">
+      <table class="table table-modern align-middle mb-0">
+        <thead><tr><th>ID</th><th>Ảnh</th><th>Tên</th><th>Nhóm cơ</th><th>Thiết bị</th><th>Độ khó</th><th>Trạng thái</th><th class="text-end">Hành động</th></tr></thead>
+        <tbody>
+          @for (e of exercises(); track e.id) {
+            <tr [class.opacity-50]="e.status === 'inactive'">
+              <td class="text-muted">#{{ e.id }}</td>
+              <td><img [src]="e.image_url" alt="" class="thumb-sm" appImgFallback /></td>
+              <td>
+                <strong class="d-block">{{ e.name }}</strong>
+                <small class="text-muted">{{ e.default_sets }}×{{ e.default_reps }} · nghỉ {{ e.default_rest_seconds }}s</small>
+              </td>
+              <td><span class="badge badge-soft-primary">{{ e.muscle_group | label: 'muscle' }}</span></td>
+              <td class="small">{{ e.equipment || '—' }}</td>
+              <td><span class="badge" [class]="'badge ' + (e.difficulty | badge)">{{ e.difficulty | label: 'difficulty' }}</span></td>
+              <td><span class="badge" [class]="e.status === 'active' ? 'badge badge-soft-success' : 'badge badge-soft-secondary'">{{ e.status === 'active' ? 'Hoạt động' : 'Ngừng' }}</span></td>
+              <td class="text-end text-nowrap">
+                <a class="btn btn-sm btn-light" [routerLink]="['/admin/exercises', e.id, 'edit']" title="Sửa"><i class="bi bi-pencil"></i></a>
+                <button type="button" class="btn btn-sm btn-light text-danger ms-1" (click)="remove(e)" title="Xóa"><i class="bi bi-trash3"></i></button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <app-empty-state icon="bi-search" title="Không tìm thấy bài tập phù hợp." actionLabel="Thêm bài tập" actionLink="/admin/exercises/create" />
+  }
+</div>

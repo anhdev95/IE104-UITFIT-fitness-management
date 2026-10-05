@@ -1,0 +1,112 @@
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+  <div class="segmented">
+    @for (r of ranges; track r.value) {
+      <button type="button" [class.active]="range() === r.value" (click)="setRange(r.value)">{{ r.label }}</button>
+    }
+  </div>
+  <a routerLink="/health" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>Cập nhật chỉ số</a>
+</div>
+
+@if (loading() && !stats()) {
+  <app-loading />
+} @else if (stats(); as s) {
+  @if (!s.series.length) {
+    <div class="card-soft">
+      <app-empty-state icon="bi-heart-pulse" title="Chưa có dữ liệu sức khỏe." message="Không có bản ghi nào trong khoảng thời gian này."
+        actionLabel="Cập nhật chỉ số" actionLink="/health" />
+    </div>
+  } @else {
+    <div class="row g-3 mb-4">
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon icon-secondary"><i class="bi bi-flag"></i></div>
+          <div><span class="stat-label">Cân nặng đầu kỳ</span><strong class="stat-value">{{ s.summary.startWeight | num }} kg</strong>
+            <span class="stat-sub">{{ s.from | date: 'dd/MM/yyyy' }}</span></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon icon-primary"><i class="bi bi-speedometer"></i></div>
+          <div><span class="stat-label">Hiện tại</span><strong class="stat-value">{{ s.summary.currentWeight | num }} kg</strong>
+            <span class="stat-sub">{{ s.summary.recordsCount }} lần đo</span></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon icon-warning"><i class="bi bi-arrow-down-up"></i></div>
+          <div><span class="stat-label">Chênh lệch</span>
+            <strong class="stat-value" [class]="'stat-value ' + changeClass(s.summary.weightChange)">
+              {{ (s.summary.weightChange ?? 0) > 0 ? '+' : '' }}{{ s.summary.weightChange | number: '1.0-2' }} kg
+            </strong>
+            <span class="stat-sub">so với đầu kỳ</span></div>
+        </div>
+      </div>
+      <div class="col-6 col-lg-3">
+        <div class="stat-card">
+          <div class="stat-icon icon-success"><i class="bi bi-activity"></i></div>
+          <div><span class="stat-label">BMI</span><strong class="stat-value">{{ s.summary.currentBmi | number: '1.2-2' }}</strong>
+            <span class="stat-sub bmi-{{ s.summary.bmiCategory?.key }}">{{ s.summary.bmiCategory?.label }}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4 mb-4">
+      <div class="col-xl-8">
+        <div class="card-soft h-100">
+          <div class="card-head"><h5>Biểu đồ cân nặng</h5></div>
+          <app-chart type="line" [data]="weightChart()" [height]="300" />
+        </div>
+      </div>
+      <div class="col-xl-4">
+        <div class="card-soft h-100">
+          <div class="card-head"><h5>BMI</h5></div>
+          <app-chart type="line" [data]="bmiChart()" [height]="300" />
+        </div>
+      </div>
+    </div>
+
+    <div class="row g-4">
+      <div class="col-xl-6">
+        <div class="card-soft h-100">
+          <div class="card-head">
+            <h5>Mỡ cơ thể & Khối lượng cơ</h5>
+          </div>
+          @if (hasBodyData()) {
+            <div class="d-flex gap-4 mb-2 small">
+              <span>Mỡ: <strong>{{ s.summary.bodyFat | num }}%</strong>
+                @if (s.summary.bodyFatChange) { <span [class]="changeClass(s.summary.bodyFatChange)">({{ s.summary.bodyFatChange > 0 ? '+' : '' }}{{ s.summary.bodyFatChange | num }})</span> }</span>
+              <span>Cơ: <strong>{{ s.summary.muscleMass | num }} kg</strong>
+                @if (s.summary.muscleMassChange) { <span [class]="changeClass(s.summary.muscleMassChange, false)">({{ s.summary.muscleMassChange > 0 ? '+' : '' }}{{ s.summary.muscleMassChange | num }})</span> }</span>
+            </div>
+            <app-chart type="line" [data]="bodyChart()" [height]="280" />
+          } @else {
+            <app-empty-state icon="bi-droplet-half" title="Chưa có dữ liệu mỡ / cơ" message="Nhập Body fat và Muscle mass khi cập nhật chỉ số." />
+          }
+        </div>
+      </div>
+      <div class="col-xl-6">
+        <div class="card-soft h-100">
+          <div class="card-head"><h5>Lịch sử chỉ số</h5></div>
+          <div class="table-responsive scroll-y-400">
+            <table class="table table-modern table-sm mb-0">
+              <thead><tr><th>Ngày</th><th>Cân nặng</th><th>BMI</th><th>Eo</th><th>Ngực</th><th>Fat %</th><th>Cơ</th></tr></thead>
+              <tbody>
+                @for (r of s.records; track r.id) {
+                  <tr>
+                    <td>{{ r.record_date | date: 'dd/MM/yyyy' }}</td>
+                    <td class="fw-semibold">{{ r.weight | num }} kg</td>
+                    <td><span class="bmi-{{ r.bmi_category?.key }}">{{ r.bmi | number: '1.2-2' }}</span></td>
+                    <td>{{ r.waist | num }}</td>
+                    <td>{{ r.chest | num }}</td>
+                    <td>{{ r.body_fat | num }}</td>
+                    <td>{{ r.muscle_mass | num }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+}

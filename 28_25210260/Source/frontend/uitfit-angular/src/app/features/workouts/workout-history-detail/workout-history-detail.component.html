@@ -1,0 +1,78 @@
+<a routerLink="/history" class="back-link"><i class="bi bi-arrow-left me-1"></i>Lịch sử tập luyện</a>
+
+@if (loading()) {
+  <app-loading />
+} @else if (session(); as s) {
+  <div class="card-soft mb-4">
+    <div class="d-flex flex-wrap justify-content-between gap-3 align-items-start">
+      <div>
+        <div class="d-flex align-items-center gap-2 mb-1">
+          <h2 class="mb-0">{{ s.plan_name }}</h2>
+          <span class="badge" [class]="'badge ' + (s.status | badge)">{{ s.status | label: 'sessionStatus' }}</span>
+        </div>
+        <div class="plan-meta">
+          <span><i class="bi bi-calendar3"></i>{{ s.started_at | date: 'EEEE, dd/MM/yyyy' }}</span>
+          <span><i class="bi bi-clock"></i>{{ s.started_at | date: 'HH:mm' }} – {{ s.completed_at ? (s.completed_at | date: 'HH:mm') : '...' }}</span>
+        </div>
+      </div>
+      @if (s.status === 'in_progress') {
+        <a class="btn btn-primary" [routerLink]="['/workout-session', s.id]"><i class="bi bi-play-fill me-1"></i>Tiếp tục tập</a>
+      } @else if (s.workout_plan_id) {
+        <a class="btn btn-light" [routerLink]="['/workouts', s.workout_plan_id]"><i class="bi bi-calendar2-check me-1"></i>Xem lịch tập</a>
+      }
+    </div>
+
+    <div class="summary-grid mt-4">
+      <div><span>Thời gian tập</span><strong>{{ s.duration_seconds | duration }}</strong></div>
+      <div><span>Tổng bài</span><strong>{{ s.summary?.total_exercises }}</strong></div>
+      <div><span>Tổng sets</span><strong>{{ s.summary?.completed_sets }}/{{ s.summary?.total_sets }}</strong></div>
+      <div><span>Tổng reps</span><strong>{{ s.summary?.total_reps }}</strong></div>
+      <div><span>Tổng volume</span><strong>{{ s.summary?.total_volume | number: '1.0-1' }} kg</strong></div>
+    </div>
+    @if (s.note) {
+      <div class="note-box mt-3"><i class="bi bi-chat-quote me-2"></i>{{ s.note }}</div>
+    }
+  </div>
+
+  <div class="row g-4">
+    @for (ex of s.exercises; track ex.exercise_id; let i = $index) {
+      <div class="col-xl-6">
+        <div class="card-soft h-100">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="order-badge">{{ i + 1 }}</span>
+            <img [src]="ex.exercise?.image_url" alt="" class="thumb-sm" appImgFallback />
+            <div class="flex-grow-1">
+              <strong class="d-block">{{ ex.exercise?.name }}</strong>
+              <small class="text-muted">{{ ex.exercise?.muscle_group | label: 'muscle' }} · Target {{ ex.target_sets }}×{{ ex.target_reps }}
+                @if (ex.target_weight) { · {{ ex.target_weight | num }}kg }</small>
+            </div>
+            <span class="text-nowrap small fw-semibold">{{ ex.summary.total_volume | number: '1.0-1' }} kg</span>
+          </div>
+          <table class="table table-modern table-sm mb-0">
+            <thead><tr><th>Set</th><th>Reps</th><th>Kg</th><th>RPE</th><th>Volume</th><th>Note</th><th></th></tr></thead>
+            <tbody>
+              @for (set of ex.sets; track set.id) {
+                <tr [class.text-muted]="!set.completed">
+                  <td><span class="set-number">{{ set.set_number }}</span></td>
+                  <td>{{ set.actual_reps ?? '—' }}<small class="text-muted">/{{ set.target_reps ?? '—' }}</small></td>
+                  <td>{{ set.actual_weight | num }}</td>
+                  <td>{{ set.rpe ?? '—' }}</td>
+                  <td>{{ set.volume | number: '1.0-1' }}</td>
+                  <td class="small">{{ set.note || '' }}</td>
+                  <td>
+                    @if (set.completed) { <i class="bi bi-check-circle-fill text-success"></i> }
+                    @else { <i class="bi bi-dash-circle text-muted" title="Chưa hoàn thành"></i> }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </div>
+    }
+  </div>
+} @else {
+  <div class="card-soft">
+    <app-empty-state icon="bi-question-circle" title="Không tìm thấy buổi tập" actionLabel="Quay lại lịch sử" actionLink="/history" />
+  </div>
+}

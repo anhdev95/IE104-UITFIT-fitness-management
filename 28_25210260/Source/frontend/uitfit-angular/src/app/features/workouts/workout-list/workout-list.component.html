@@ -1,0 +1,70 @@
+<div class="d-flex flex-wrap gap-3 justify-content-between align-items-center mb-4">
+  <div class="tabs-pill">
+    @for (t of tabs; track t.value) {
+      <button type="button" [class.active]="tab() === t.value" (click)="setTab(t.value)">
+        <i class="bi" [class]="t.icon"></i> {{ t.label }}
+      </button>
+    }
+  </div>
+  <div class="d-flex gap-2">
+    <div class="input-icon">
+      <i class="bi bi-search"></i>
+      <input type="search" class="form-control" placeholder="Tìm lịch tập..." [ngModel]="search()"
+        (ngModelChange)="search.set($event)" (keyup.enter)="load()" (search)="load()" aria-label="Tìm lịch tập" />
+    </div>
+    <a routerLink="/workouts/create" class="btn btn-primary text-nowrap"><i class="bi bi-plus-lg me-1"></i>Tạo lịch tập</a>
+  </div>
+</div>
+
+@if (loading()) {
+  <app-loading />
+} @else {
+  <div class="row g-4">
+    @for (p of plans(); track p.id) {
+      <div class="col-md-6 col-xxl-4">
+        <div class="plan-card h-100">
+          <div class="d-flex justify-content-between align-items-start mb-2">
+            <div class="min-w-0">
+              <h5 class="mb-1 text-truncate"><a [routerLink]="['/workouts', p.id]">{{ p.name }}</a></h5>
+              <small class="text-muted">
+                <i class="bi bi-calendar3 me-1"></i>{{ p.scheduled_date ? (p.scheduled_date | date: 'EEEE, dd/MM/yyyy') : 'Chưa đặt ngày' }}
+              </small>
+            </div>
+            <span class="badge" [class]="'badge ' + (p.status | badge)">{{ p.status | label: 'planStatus' }}</span>
+          </div>
+          @if (p.description) { <p class="text-muted small mb-2 text-truncate">{{ p.description }}</p> }
+          <div class="plan-meta">
+            <span><i class="bi bi-list-check"></i>{{ p.exercises_count }} bài</span>
+            <span><i class="bi bi-stack"></i>{{ p.total_sets }} sets</span>
+            @if (p.estimated_duration) { <span><i class="bi bi-clock"></i>{{ p.estimated_duration }} phút</span> }
+            @if (p.difficulty) { <span><i class="bi bi-bar-chart"></i>{{ p.difficulty | label: 'difficulty' }}</span> }
+          </div>
+          <div class="d-flex justify-content-between small mt-3 mb-1"><span class="text-muted">Tiến độ</span><strong>{{ p.progress }}%</strong></div>
+          <div class="progress mb-3" style="height: 8px">
+            <div class="progress-bar" [class.bg-success]="p.progress === 100" [style.width.%]="p.progress"></div>
+          </div>
+          <div class="plan-actions">
+            <a class="btn btn-sm btn-light" [routerLink]="['/workouts', p.id]" title="Xem"><i class="bi bi-eye"></i> Xem</a>
+            <a class="btn btn-sm btn-light" [routerLink]="['/workouts', p.id, 'edit']" title="Sửa"><i class="bi bi-pencil"></i> Sửa</a>
+            <button type="button" class="btn btn-sm btn-light text-danger" (click)="remove(p)" title="Xóa"><i class="bi bi-trash3"></i> Xóa</button>
+            <button type="button" class="btn btn-sm btn-primary ms-auto" (click)="start(p)" [disabled]="busyId() === p.id">
+              @if (busyId() === p.id) { <span class="spinner-border spinner-border-sm me-1"></span> }
+              <i class="bi bi-play-fill"></i> {{ p.active_session_id ? 'Tiếp tục' : (p.status === 'completed' ? 'Tập lại' : 'Bắt đầu tập') }}
+            </button>
+          </div>
+        </div>
+      </div>
+    } @empty {
+      <div class="col-12">
+        <div class="card-soft">
+          @if (tab() === 'all' && !search()) {
+            <app-empty-state icon="bi-calendar-plus" title="Bạn chưa có lịch tập nào." message="Tạo lịch tập để bắt đầu theo dõi buổi tập của bạn."
+              actionLabel="Tạo lịch tập đầu tiên" actionLink="/workouts/create" />
+          } @else {
+            <app-empty-state icon="bi-filter" title="Không có lịch tập nào phù hợp." message="Thử chọn tab khác hoặc đổi từ khóa tìm kiếm." />
+          }
+        </div>
+      </div>
+    }
+  </div>
+}
